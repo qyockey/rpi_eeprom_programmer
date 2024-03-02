@@ -52,8 +52,8 @@ void enable_interrupts() {
 }
 
 
-/* avg 200 ns, range about 150 to 250 */
-static void delay_200_ns(){
+/* avg 400 ns, range about 350 to 450 */
+static void delay_400_ns(){
     volatile uint32_t count = 200;
     __asm volatile (
         "1: subs %[count], %[count], #1\n"
@@ -67,6 +67,7 @@ static void delay_200_ns(){
 static void pulse_write_enable(){
     volatile uint32_t count = 200;
     *clr_reg = (1 << WRITE_ENABLE);
+    // copy pasted code from delay_400_ns to avoid function call overhead
     __asm volatile (
         "1: subs %[count], %[count], #1\n"
         "    bne 1b\n"
@@ -220,7 +221,7 @@ static void eeprom_page_read(const struct GPIOData *gpio_data,
 
         usleep(1);
         eeprom_data[it - start] = (*level_reg >> DATA_0) & 0xff;
-        delay_200_ns();
+        delay_400_ns();
 
         *clr_reg = (it->clr & ~(1 << WRITE_ENABLE)) & ~(1 << OUTPUT_ENABLE);
     }
@@ -250,11 +251,11 @@ static void eeprom_page_write(const struct GPIOData *gpio_data,
 
     for (const struct GPIOData *it = start; it < end; ++it) {
         *set_reg = it->set | (1 << WRITE_ENABLE);
-        delay_200_ns();
-        delay_200_ns();
+        delay_400_ns();
+        delay_400_ns();
         pulse_write_enable();
-        delay_200_ns();
-        delay_200_ns();
+        delay_400_ns();
+        delay_400_ns();
         *clr_reg = it->clr & ~(1 << WRITE_ENABLE);
     }
 
